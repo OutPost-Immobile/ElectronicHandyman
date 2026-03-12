@@ -1,0 +1,6 @@
+@ElectronicHandyman.Api_HostAddress = http://localhost:5210
+
+GET {{ElectronicHandyman.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
