@@ -8,14 +8,14 @@ namespace ElectronicHandyman.Scrapper.Internal;
 internal class ArduinoPageFetcher
 {
     private readonly PlaywrightBrowserProvider _playwrightProvider;
-    private readonly SourceUrl _arduinoOptions;
+    private readonly ArduinoOptions _arduinoOptions;
     private readonly ILogger<ArduinoPageFetcher> _logger;
 
-    public ArduinoPageFetcher(PlaywrightBrowserProvider playwrightProvider, IOptions<SourceOptions> options, ILogger<ArduinoPageFetcher> logger)
+    public ArduinoPageFetcher(PlaywrightBrowserProvider playwrightProvider, IOptions<ArduinoOptions> options, ILogger<ArduinoPageFetcher> logger)
     {
         _playwrightProvider = playwrightProvider;
         _logger = logger;
-        _arduinoOptions = options.Value.Items.First(x => x.Name == "Arduino");
+        _arduinoOptions = options.Value;
     }
 
     public async Task<List<string>> FetchFamiliesAsync()

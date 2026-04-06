@@ -19,8 +19,18 @@ public static class ServiceExtensions
             .AddScoped<IArduinoScrapperService, ArduinoScrapperService>()
             .AddScoped<IScrappingDataPersister, ScrappingDataPersister>();
         
-        services.AddOptions<SourceOptions>()
-            .Bind(configuration.GetSection("Source"))
+        services.AddOptions<ArduinoOptions>()
+            .Bind(configuration.GetSection(ArduinoOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        
+        services.AddOptions<TexasOptions>()
+            .Bind(configuration.GetSection(TexasOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        
+        services.AddOptions<PlatformIOOPtions>()
+            .Bind(configuration.GetSection(PlatformIOOPtions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
         

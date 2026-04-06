@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
-using System.Text.Json;
 using ElectronicHandyman.Scrapper.Abstractions;
 using ElectronicHandyman.Scrapper.Internal;
 using ElectronicHandyman.Scrapper.Models;
@@ -15,16 +14,16 @@ namespace ElectronicHandyman.Scrapper.Services;
 internal class ArduinoScrapperService : IArduinoScrapperService
 {
     private readonly ArduinoPageFetcher _pageFetcher;
-    private readonly SourceUrl _arduinoOptions;
+    private readonly ArduinoOptions _arduinoOptions;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ArduinoScrapperService> _logger;
 
-    public ArduinoScrapperService(ArduinoPageFetcher pageFetcher, IOptions<SourceOptions> options, IHttpClientFactory httpClientFactory, ILogger<ArduinoScrapperService> logger)
+    public ArduinoScrapperService(ArduinoPageFetcher pageFetcher, IOptions<ArduinoOptions> options, IHttpClientFactory httpClientFactory, ILogger<ArduinoScrapperService> logger)
     {
         _pageFetcher = pageFetcher;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _arduinoOptions = options.Value.Items.First(x => x.Name == "Arduino");
+        _arduinoOptions = options.Value;
     }
 
     public async Task<IEnumerable<BoardFamilyModel>> ScrapArduinoBoardsPageAsync()
