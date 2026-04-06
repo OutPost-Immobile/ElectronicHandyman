@@ -2,7 +2,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using ElectronicHandyman.Domain;
 using ElectronicHandyman.Domain.Domain.Config;
+using ElectronicHandyman.Scrapper.Models.Api;
 using ElectronicHandyman.Scrapper.Options;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -49,7 +51,7 @@ internal class TexasApiClient
         return token;
     }
 
-    public async Task<> SearchForBoardAsync(string boardName)
+    public async Task<TexasApiResponseModel> SearchForBoardAsync(string boardName)
     {
         var token = await _dbContext.TexasApiConfig
             .Select(x => x.AccessToken)
@@ -58,7 +60,34 @@ internal class TexasApiClient
         using var client = _httpClientFactory.CreateClient();
         
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var parameters = new Dictionary<string, string>
+        {
+            ["GenericProductIdentifier"] = boardName,
+            ["PageNumber"] = "0",
+            ["Size"] = "100"
+        };
         
-        
+        var url = QueryHelpers.AddQueryString(_texasOptions.Url + "products", parameters);
+
+        var response = await client.GetFromJsonAsync<TexasApiResponseModel>(url) ?? throw new InvalidOperationException($"Failed to fetch data from {url}.");
+
+        if (response.TotalPages <= 1)
+        {
+            return response;
+        }
+
+        for (int i = 1; i < response.TotalPages; i++)
+        {
+            parameters["PageNumber"] = i.ToString();
+                
+            var tempUrl = QueryHelpers.AddQueryString(_texasOptions.Url + "products", parameters);
+
+            var tempResponse = await client.GetFromJsonAsync<TexasApiResponseModel>(tempUrl);
+                
+            response.Content.AddRange(tempResponse.Content);
+        }
+
+        return response;
     }
 }
