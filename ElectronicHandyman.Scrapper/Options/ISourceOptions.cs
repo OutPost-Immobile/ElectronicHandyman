@@ -32,4 +32,7 @@ internal record TexasOptions : SourceOptionsBase, ISourceOptions
     
     [Required]
     public required string Secret { get; init; }
+    
+    [Required]
+    public required string DataSheetUrl { get; init; }
 }
