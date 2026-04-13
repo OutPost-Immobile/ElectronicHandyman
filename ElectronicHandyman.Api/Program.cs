@@ -1,8 +1,14 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using Scalar.AspNetCore;
+using Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddAntiforgery();
 
 var app = builder.Build();
 
@@ -10,9 +16,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
+
+app.UseAntiforgery();
 
 var summaries = new[]
 {
@@ -33,6 +43,19 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
+app.MapPost("/api/image/upload", async (IFormFile file) =>
+    {
+
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream);
+
+        var imageBytes = memoryStream.ToArray();
+        
+        ImageProcessing.ProcessImage(imageBytes);
+        return TypedResults.Ok("Plik wczytany pomyślnie");
+    })
+    .WithName("UploadImage")
+    .DisableAntiforgery();
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
