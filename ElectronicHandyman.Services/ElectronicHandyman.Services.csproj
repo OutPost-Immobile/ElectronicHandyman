@@ -8,6 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="MSDMarkwort.Kicad.Parser.EESchema" Version="0.1.11" />
+      <PackageReference Include="MSDMarkwort.Kicad.Parser.PcbNew" Version="0.1.11" />
+      <PackageReference Include="MSDMarkwort.Kicad.Parser.Project" Version="0.1.11" />
       <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260330" />
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
       <PackageReference Include="Tesseract" Version="5.2.0" />
@@ -17,6 +20,16 @@
       <None Update="tessdata\eng.traineddata">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions">
+        <HintPath>..\..\..\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\10.0.5\lib\net10.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ElectronicHandyman.Domain\ElectronicHandyman.Domain.csproj" />
     </ItemGroup>
 
 </Project>
