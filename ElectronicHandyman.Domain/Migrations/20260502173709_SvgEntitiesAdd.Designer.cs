@@ -3,6 +3,7 @@ using System;
 using ElectronicHandyman.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElectronicHandyman.Domain.Migrations
 {
     [DbContext(typeof(HandymanDbContext))]
-    partial class HandymanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260502173709_SvgEntitiesAdd")]
+    partial class SvgEntitiesAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -306,9 +309,6 @@ namespace ElectronicHandyman.Domain.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
 
                     b.ToTable("Symbols");
                 });

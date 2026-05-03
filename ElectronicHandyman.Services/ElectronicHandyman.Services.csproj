@@ -30,6 +30,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ElectronicHandyman.Domain\ElectronicHandyman.Domain.csproj" />
+      <ProjectReference Include="..\ElectronicHandyman.Scrapper\ElectronicHandyman.Scrapper.csproj" />
     </ItemGroup>
 
 </Project>
