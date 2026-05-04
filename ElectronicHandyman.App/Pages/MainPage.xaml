@@ -13,13 +13,26 @@
              Title="{Binding Today}">
 
     <Grid RowDefinitions="6*, 4*">
-        <maui:CameraView x:Name="CameraView" 
-                       Grid.Row="0"
-                       WidthRequest="400" 
-                       HeightRequest="400" />
+        <!-- Camera + Overlay stacked -->
+        <Grid Grid.Row="0">
+            <maui:CameraView x:Name="CameraView"
+                             WidthRequest="400"
+                             HeightRequest="400" />
+            <GraphicsView x:Name="OverlayView"
+                          InputTransparent="True" />
+        </Grid>
 
+        <!-- Cropped images -->
         <ScrollView Grid.Row="1">
             <HorizontalStackLayout x:Name="CroppedImagesLayout" Spacing="10" Padding="10" />
         </ScrollView>
+
+        <!-- No camera message -->
+        <Label x:Name="NoCameraLabel"
+               Grid.Row="0"
+               Text="No camera found on this device."
+               IsVisible="False"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
     </Grid>
 </ContentPage>

@@ -79,5 +79,4 @@
         <PackageReference Include="Syncfusion.Maui.Toolkit" Version="1.0.8"/>
         <PackageReference Include="Sdcb.OpenCvSharp4.mini.runtime.android-arm64" Version="4.11.0.35" />
     </ItemGroup>
-
 </Project>

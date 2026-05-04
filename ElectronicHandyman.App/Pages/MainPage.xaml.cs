@@ -1,5 +1,6 @@
 ﻿using ElectronicHandyman.App.Models;
 using ElectronicHandyman.App.PageModels;
+using ElectronicHandyman.App.Services;
 
 namespace ElectronicHandyman.App.Pages;
 
@@ -8,18 +9,23 @@ public partial class MainPage : ContentPage
     private readonly VideoFrameProcessor _processor;
     private IDispatcherTimer _timer;
     private bool _isProcessing = false;
+    private BoundingBoxDrawable _drawable;
 
-    public MainPage()
+    public MainPage(VideoFrameProcessor processor)
     {
         InitializeComponent();
-        _processor = new VideoFrameProcessor();
+        _processor = processor;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        
-        // Rejestrujemy zdarzenie, by wiedzieć, kiedy kamery sprzętowe są gotowe
+
+        _drawable = new BoundingBoxDrawable();
+        OverlayView.Drawable = _drawable;
+
+        // Always register the event — on Android, accessing Cameras before the
+        // native handler is attached can throw JavaProxyThrowable.
         CameraView.CamerasLoaded += CameraView_CamerasLoaded;
     }
 
@@ -27,19 +33,43 @@ public partial class MainPage : ContentPage
     {
         base.OnDisappearing();
         _timer?.Stop();
-        await CameraView.StopCameraAsync();
+        CameraView.CamerasLoaded -= CameraView_CamerasLoaded;
+
+        try
+        {
+            await CameraView.StopCameraAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Camera stop error]: {ex.Message}");
+        }
     }
 
-    private async void CameraView_CamerasLoaded(object sender, EventArgs e)
+    private async void StartCamera()
+    {
+        try
+        {
+            CameraView.Camera = CameraView.Cameras.First();
+            await CameraView.StartCameraAsync();
+            StartFrameTimer();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Camera start error]: {ex.Message}");
+        }
+    }
+
+    private void CameraView_CamerasLoaded(object sender, EventArgs e)
     {
         if (CameraView.Cameras.Count > 0)
         {
-            CameraView.Camera = CameraView.Cameras.First(); // Domyślnie główna kamera z tyłu
-            
-            MainThread.BeginInvokeOnMainThread(async () =>
+            MainThread.BeginInvokeOnMainThread(() => StartCamera());
+        }
+        else
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                await CameraView.StartCameraAsync();
-                StartFrameTimer(); // Zaczynamy cykliczne przechwytywanie
+                NoCameraLabel.IsVisible = true;
             });
         }
     }
@@ -75,32 +105,33 @@ public partial class MainPage : ContentPage
                 byte[] frameBytes = memoryStream.ToArray();
 
                 // 1. Uruchamiamy "ciężką" detekcję na osobnym wątku, żeby ekran nie zamarzł
-                var croppedComponents = await Task.Run(() => 
-                {
-                    return _processor.ProcessCameraFrameAndCrop(frameBytes);
-                });
+                var result = await Task.Run(() => _processor.ProcessFrame(frameBytes));
 
-                // 2. Wracamy na wątek UI, aby zaktualizować listę wyciętych kostek
-                if (croppedComponents.Count > 0)
+                // 2. Wracamy na wątek UI, aby zaktualizować overlay i listę wyciętych kostek
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    MainThread.BeginInvokeOnMainThread(() =>
+                    // Update bounding box overlay — always replace to clear stale rectangles
+                    _drawable.BoundingBoxes = result.BoundingBoxes;
+                    _drawable.FrameWidth = result.FrameWidth;
+                    _drawable.FrameHeight = result.FrameHeight;
+                    OverlayView.Invalidate();
+
+                    // Update cropped images display — always clear previous results
+                    CroppedImagesLayout.Children.Clear();
+
+                    foreach (var imageBytes in result.CroppedImages)
                     {
-                        CroppedImagesLayout.Children.Clear(); // opcjonalnie: czyści starsze wyniki
-                        
-                        foreach (var imageBytes in croppedComponents)
+                        var src = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                        var imageControl = new Image
                         {
-                            var src = ImageSource.FromStream(() => new MemoryStream(imageBytes));
-                            var imageControl = new Image 
-                            { 
-                                Source = src, 
-                                HeightRequest = 100, 
-                                WidthRequest = 100,
-                                Margin = new Thickness(5)
-                            };
-                            CroppedImagesLayout.Children.Add(imageControl);
-                        }
-                    });
-                }
+                            Source = src,
+                            HeightRequest = 100,
+                            WidthRequest = 100,
+                            Margin = new Thickness(5)
+                        };
+                        CroppedImagesLayout.Children.Add(imageControl);
+                    }
+                });
             }
         }
         catch (Exception ex)

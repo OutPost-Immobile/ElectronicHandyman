@@ -6,14 +6,15 @@ public class VideoFrameProcessor
 {
     private const int AnalysisWidth = 640; 
     
-    public List<byte[]> ProcessCameraFrameAndCrop(byte[] cameraFrameBytes)
+    public DetectionResult ProcessFrame(byte[] cameraFrameBytes)
     {
-        var croppedElements = new List<byte[]>();
+        var boundingBoxes = new List<BoundingBox>();
+        var croppedImages = new List<byte[]>();
         
         using var originalFrame = Cv2.ImDecode(cameraFrameBytes, ImreadModes.Color);
         if (originalFrame.Empty())
         {
-            return croppedElements;
+            return new DetectionResult { BoundingBoxes = boundingBoxes, CroppedImages = croppedImages };
         }
         
         float scale = (float)AnalysisWidth / originalFrame.Width;
@@ -62,17 +63,26 @@ public class VideoFrameProcessor
                     originalRect.Right <= originalFrame.Width && 
                     originalRect.Bottom <= originalFrame.Height)
                 {
+                    // Collect bounding box in original frame coordinates
+                    boundingBoxes.Add(new BoundingBox(originalX, originalY, originalWidth, originalHeight));
+
                     // Wycinka z dużej, ostrej klatki
                     using var croppedMat = new Mat(originalFrame, originalRect);
                     
                     // Zapis wycinka do tablicy bajtów (np. jako PNG)
                     Cv2.ImEncode(".png", croppedMat, out var croppedBytes);
-                    croppedElements.Add(croppedBytes);
+                    croppedImages.Add(croppedBytes);
                 }
             }
         }
 
-        // Zwracamy listę wyciętych obrazków. Aplikacja mobilna decyduje co z nimi zrobić.
-        return croppedElements;
+        // Zwracamy wynik detekcji z bounding boxami i wyciętymi obrazkami
+        return new DetectionResult
+        {
+            BoundingBoxes = boundingBoxes,
+            CroppedImages = croppedImages,
+            FrameWidth = originalFrame.Width,
+            FrameHeight = originalFrame.Height
+        };
     }
 }
