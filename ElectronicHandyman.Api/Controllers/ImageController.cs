@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using Services.Abstractions;
+using Services.Internal;
+using MatchType = Services.Internal.MatchType;
 
 namespace ElectronicHandyman.Api.Controllers;
 
@@ -39,8 +41,14 @@ public static class ImageController
         }
         
         // var response = await texasService.AuthenticateAndGetBoardsFamily(text);
-        var board = await provider.SearchForPinoutAsync(text);
-        var svgContent = await svgGenerator.GenerateSvgDocumentAsync(board);
+        var searchResult = await provider.SearchForPinoutFuzzyAsync(text);
+
+        if (searchResult.Type == MatchType.NotFound)
+        {
+            return TypedResults.Ok(searchResult.ErrorMessage);
+        }
+
+        var svgContent = await svgGenerator.GenerateSvgDocumentAsync(searchResult.Symbol!);
         
         byte[] finalImage;
         try
@@ -53,6 +61,7 @@ public static class ImageController
         }
         
         var outputStream = new MemoryStream(finalImage);
-        return TypedResults.File(outputStream, "image/jpeg", $"{text}_pinout.jpg");
+        var fileName = searchResult.Symbol!.Name ?? text;
+        return TypedResults.File(outputStream, "image/jpeg", $"{fileName}_pinout.jpg");
     }
 }
