@@ -1,5 +1,6 @@
 ﻿using Camera.MAUI;
 using CommunityToolkit.Maui;
+using ElectronicHandyman.App.Services;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Maui.Toolkit.Hosting;
 
@@ -44,6 +45,32 @@ public static class MauiProgram
         builder.Logging.AddDebug();
         builder.Services.AddLogging(configure => configure.AddDebug());
 #endif
+
+        builder.Services.AddHttpClient("ChipIdentificationApi", client =>
+        {
+            client.BaseAddress = new Uri(ApiConfiguration.DefaultBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(ApiConfiguration.DefaultTimeoutSeconds);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+#if ANDROID && DEBUG
+            // On Android, use the native handler with SSL bypass for self-signed certs in dev
+            var handler = new Xamarin.Android.Net.AndroidMessageHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+            return handler;
+#else
+            var handler = new HttpClientHandler();
+#if DEBUG
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#endif
+            return handler;
+#endif
+        });
+
+        builder.Services.AddSingleton<IChipIdentificationService, ChipIdentificationService>();
+        builder.Services.AddTransient<ChipIdentificationCoordinator>();
 
         builder.Services.AddSingleton<ProjectRepository>();
         builder.Services.AddSingleton<TaskRepository>();

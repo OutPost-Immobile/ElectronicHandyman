@@ -12,7 +12,7 @@
              x:Name="OverviewPage"
              Title="{Binding Today}">
 
-    <Grid RowDefinitions="6*, 4*">
+    <Grid RowDefinitions="6*, Auto, 3*">
         <!-- Camera + Overlay stacked -->
         <Grid Grid.Row="0">
             <maui:CameraView x:Name="CameraView"
@@ -20,10 +20,40 @@
                              HeightRequest="400" />
             <GraphicsView x:Name="OverlayView"
                           InputTransparent="True" />
+
+            <!-- Loading indicator overlaid on camera -->
+            <ActivityIndicator x:Name="LoadingIndicator"
+                               IsVisible="False"
+                               IsRunning="False"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Color="Gold"
+                               HeightRequest="48"
+                               WidthRequest="48" />
         </Grid>
 
+        <!-- Identification result display -->
+        <Frame x:Name="IdentificationResultFrame"
+               Grid.Row="1"
+               IsVisible="False"
+               Padding="12"
+               Margin="10,5"
+               CornerRadius="8"
+               BorderColor="Gold"
+               BackgroundColor="{AppThemeBinding Light=#F5F5DC, Dark=#2D2D1A}">
+            <VerticalStackLayout Spacing="4">
+                <Label x:Name="ChipNameLabel"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <Label x:Name="IdentificationStatusLabel"
+                       FontSize="12"
+                       TextColor="Gray" />
+            </VerticalStackLayout>
+        </Frame>
+
         <!-- Cropped images -->
-        <ScrollView Grid.Row="1">
+        <ScrollView Grid.Row="2">
             <HorizontalStackLayout x:Name="CroppedImagesLayout" Spacing="10" Padding="10" />
         </ScrollView>
 

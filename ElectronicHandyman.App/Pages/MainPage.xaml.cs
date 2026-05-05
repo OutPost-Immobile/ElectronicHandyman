@@ -7,14 +7,20 @@ namespace ElectronicHandyman.App.Pages;
 public partial class MainPage : ContentPage
 {
     private readonly VideoFrameProcessor _processor;
+    private readonly ChipIdentificationCoordinator _coordinator;
     private IDispatcherTimer _timer;
     private bool _isProcessing = false;
     private BoundingBoxDrawable _drawable;
 
-    public MainPage(VideoFrameProcessor processor)
+    private const int MaxCroppedImagesDisplayed = 3;
+
+    public MainPage(VideoFrameProcessor processor, ChipIdentificationCoordinator coordinator)
     {
         InitializeComponent();
         _processor = processor;
+        _coordinator = coordinator;
+
+        _coordinator.IdentificationCompleted += OnIdentificationCompleted;
     }
 
     protected override void OnAppearing()
@@ -24,8 +30,6 @@ public partial class MainPage : ContentPage
         _drawable = new BoundingBoxDrawable();
         OverlayView.Drawable = _drawable;
 
-        // Always register the event — on Android, accessing Cameras before the
-        // native handler is attached can throw JavaProxyThrowable.
         CameraView.CamerasLoaded += CameraView_CamerasLoaded;
     }
 
@@ -34,6 +38,9 @@ public partial class MainPage : ContentPage
         base.OnDisappearing();
         _timer?.Stop();
         CameraView.CamerasLoaded -= CameraView_CamerasLoaded;
+
+        _coordinator.IdentificationCompleted -= OnIdentificationCompleted;
+        _coordinator.Dispose();
 
         try
         {
@@ -76,8 +83,6 @@ public partial class MainPage : ContentPage
 
     private void StartFrameTimer()
     {
-        // Ustawiamy timer na przechwyt co 500 ms (2 klatki na sekundę). 
-        // Wystarczy, by w miarę szybko złapać układ w kadrze.
         _timer = Application.Current.Dispatcher.CreateTimer();
         _timer.Interval = TimeSpan.FromMilliseconds(500);
         _timer.Tick += async (s, e) => await ProcessSingleFrame();
@@ -86,62 +91,91 @@ public partial class MainPage : ContentPage
 
     private async Task ProcessSingleFrame()
     {
-        // Zabezpieczenie przed kolejkowaniem: jeśli OpenCV nadal liczy, olewamy nową klatkę
         if (_isProcessing) return;
         _isProcessing = true;
 
         try
         {
-            // Snapshot to zrzut klatki z podglądu (bez wywoływania "pstryknięcia" aparatu)
             var imageSource = CameraView.GetSnapShot(Camera.MAUI.ImageFormat.JPEG);
             
-            // MAUI ładuje to jako strumień (StreamImageSource)
             if (imageSource is StreamImageSource streamImageSource)
             {
-                // Konwersja obrazu na tablicę bajtów, którą lubi OpenCV (Cv2.ImDecode)
                 using var stream = await streamImageSource.Stream(CancellationToken.None);
                 using var memoryStream = new MemoryStream();
                 await stream.CopyToAsync(memoryStream);
                 byte[] frameBytes = memoryStream.ToArray();
 
-                // 1. Uruchamiamy "ciężką" detekcję na osobnym wątku, żeby ekran nie zamarzł
                 var result = await Task.Run(() => _processor.ProcessFrame(frameBytes));
 
-                // 2. Wracamy na wątek UI, aby zaktualizować overlay i listę wyciętych kostek
+                _coordinator.OnDetectionResult(result);
+
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    // Update bounding box overlay — always replace to clear stale rectangles
                     _drawable.BoundingBoxes = result.BoundingBoxes;
                     _drawable.FrameWidth = result.FrameWidth;
                     _drawable.FrameHeight = result.FrameHeight;
+                    _drawable.IdentificationState = _coordinator.CurrentState;
                     OverlayView.Invalidate();
 
-                    // Update cropped images display — always clear previous results
-                    CroppedImagesLayout.Children.Clear();
+                    LoadingIndicator.IsVisible = _coordinator.CurrentState.IsLoading;
+                    LoadingIndicator.IsRunning = _coordinator.CurrentState.IsLoading;
 
-                    foreach (var imageBytes in result.CroppedImages)
+                    // Update cropped images
+                    CroppedImagesLayout.Children.Clear();
+                    var imagesToShow = result.CroppedImages.Take(MaxCroppedImagesDisplayed);
+                    foreach (var imageBytes in imagesToShow)
                     {
                         var src = ImageSource.FromStream(() => new MemoryStream(imageBytes));
-                        var imageControl = new Image
+                        CroppedImagesLayout.Children.Add(new Image
                         {
                             Source = src,
                             HeightRequest = 100,
                             WidthRequest = 100,
                             Margin = new Thickness(5)
-                        };
-                        CroppedImagesLayout.Children.Add(imageControl);
+                        });
                     }
                 });
             }
         }
         catch (Exception ex)
         {
-            // Opcjonalnie: wyrzuci na konsolę ewentualny błąd z OpenCV (złe wczytanie klatki itp.)
             System.Diagnostics.Debug.WriteLine($"[Błąd OpenCV]: {ex.Message}");
         }
         finally
         {
-            _isProcessing = false; // Zwalniamy blokadę
+            _isProcessing = false;
         }
+    }
+
+    private void OnIdentificationCompleted(object? sender, IdentificationState state)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            _drawable.IdentificationState = _coordinator.CurrentState;
+            OverlayView.Invalidate();
+
+            LoadingIndicator.IsVisible = false;
+            LoadingIndicator.IsRunning = false;
+
+            // Show summary of identified chips below camera
+            var identified = state.BoxResults.Where(b => b.IsSuccess).ToList();
+            if (identified.Count > 0)
+            {
+                IdentificationResultFrame.IsVisible = true;
+                var names = string.Join(", ", identified.Select(b => b.ChipName).Where(n => !string.IsNullOrEmpty(n)));
+                ChipNameLabel.Text = names;
+                IdentificationStatusLabel.Text = $"✓ Zidentyfikowano {identified.Count}/{state.BoxResults.Count}";
+            }
+            else if (state.BoxResults.Count > 0)
+            {
+                IdentificationResultFrame.IsVisible = true;
+                ChipNameLabel.Text = "Nie rozpoznano";
+                IdentificationStatusLabel.Text = $"0/{state.BoxResults.Count} zidentyfikowanych";
+            }
+            else
+            {
+                IdentificationResultFrame.IsVisible = false;
+            }
+        });
     }
 }

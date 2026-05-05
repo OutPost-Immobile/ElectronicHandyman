@@ -95,46 +95,59 @@ internal class DataProvider : IDataProvider
             };
         }
         
+        // Step 3: Smart prefix filtering with multiple prefix variants
         Console.WriteLine($"Starting fuzzy search for [{normalizedOcrText}]");
-        var candidateNames = await _dbContext.Symbols
-            .Select(x => x.Name)
-            .ToListAsync();
-        Console.WriteLine($"Loaded {candidateNames.Count} candidates");
-
-        // Step 7 & 8: Compute weighted Levenshtein and find best match
-        // Normalize candidate names to uppercase for fair comparison (DB may have mixed case like "STM32F103C6Tx")
-        var normalizedCandidates = candidateNames
-            .Where(c => !string.IsNullOrEmpty(c))
-            .Select(c => (Original: c, Upper: c.ToUpperInvariant()))
-            .ToList();
-
-        Console.WriteLine($"Fuzzy search: query=[{normalizedOcrText}], candidates={normalizedCandidates.Count}, threshold={threshold}");
-        foreach (var (orig, upper) in normalizedCandidates.Take(10))
+        
+        var candidateSet = new HashSet<string>();
+        
+        if (normalizedOcrText.Length >= 3)
         {
-            var d = _matcher.ComputeDistance(normalizedOcrText, upper);
-            Console.WriteLine($"  Candidate [{orig}] (upper=[{upper}]) distance={d:F1}");
-        }
-
-        // Find best match using uppercase names
-        string? bestOriginalName = null;
-        double bestDistance = double.MaxValue;
-
-        foreach (var (orig, upper) in normalizedCandidates)
-        {
-            var distance = _matcher.ComputeDistance(normalizedOcrText, upper);
-            if (distance < bestDistance ||
-                (distance == bestDistance && bestOriginalName != null && orig.Length < bestOriginalName.Length))
+            var prefixVariants = new List<string>
             {
-                bestDistance = distance;
-                bestOriginalName = orig;
+                normalizedOcrText[..3],
+                normalizedOcrText.Length >= 4 ? normalizedOcrText[1..4] : normalizedOcrText[1..],
+                normalizedOcrText.Length >= 5 ? normalizedOcrText[2..5] : normalizedOcrText[2..],
+            };
+
+            foreach (var pv in prefixVariants.Distinct())
+            {
+                var matches = await _dbContext.Symbols
+                    .Where(x => x.Name.ToUpper().StartsWith(pv))
+                    .Select(x => x.Name)
+                    .ToListAsync();
+                Console.WriteLine($"  Prefix [{pv}]: {matches.Count} candidates");
+                foreach (var m in matches) candidateSet.Add(m);
             }
         }
 
-        MatchResult? matchResult = null;
-        if (bestOriginalName is not null && bestDistance <= threshold)
+        if (candidateSet.Count == 0)
         {
-            matchResult = new MatchResult(bestOriginalName, bestDistance);
+            Console.WriteLine("  No prefix matches, loading all candidates");
+            var all = await _dbContext.Symbols.Select(x => x.Name).ToListAsync();
+            foreach (var a in all) candidateSet.Add(a);
         }
+
+        Console.WriteLine($"Total unique candidates: {candidateSet.Count}");
+
+        // Step 7 & 8: Find best match (case-insensitive via ComputeDistance)
+        string? bestOriginalName = null;
+        double bestDistance = double.MaxValue;
+
+        foreach (var candidate in candidateSet)
+        {
+            if (string.IsNullOrEmpty(candidate)) continue;
+            var distance = _matcher.ComputeDistance(normalizedOcrText, candidate);
+            if (distance < bestDistance ||
+                (distance == bestDistance && bestOriginalName != null && candidate.Length < bestOriginalName.Length))
+            {
+                bestDistance = distance;
+                bestOriginalName = candidate;
+            }
+        }
+
+        MatchResult? matchResult = bestOriginalName is not null && bestDistance <= threshold
+            ? new MatchResult(bestOriginalName, bestDistance)
+            : null;
 
         // Step 9: If match found, load full SymbolModel and return Fuzzy result
         Console.WriteLine(matchResult is not null
