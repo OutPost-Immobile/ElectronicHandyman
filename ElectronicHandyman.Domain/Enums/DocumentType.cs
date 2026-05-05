@@ -3,5 +3,8 @@ namespace ElectronicHandyman.Domain.Enums;
 public enum DocumentType
 {
     Pinout,
-    Schematics
+    Schematics,
+    Datasheet,
+    QualityEstimator,
+    MaterialContent
 }

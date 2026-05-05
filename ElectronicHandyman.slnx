@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="ElectronicHandyman.Api/ElectronicHandyman.Api.csproj" />
+  <Project Path="ElectronicHandyman.App/ElectronicHandyman.App.csproj" />
   <Project Path="ElectronicHandyman.Domain/ElectronicHandyman.Domain.csproj" />
   <Project Path="ElectronicHandyman.Scrapper/ElectronicHandyman.Scrapper.csproj" />
-  <Project Path="ElectronicHandyman.Services\ElectronicHandyman.Services.csproj" Type="Classic C#" />
+  <Project Path="ElectronicHandyman.Services\ElectronicHandyman.Services.csproj" Type="C#" />
+  <Project Path="ElectronicHandyman.Services.Tests\ElectronicHandyman.Services.Tests.csproj" Type="C#" />
 </Solution>

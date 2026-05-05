@@ -1,4 +1,5 @@
 using ElectronicHandyman.Scrapper.Abstractions;
+using ElectronicHandyman.Scrapper.Clients;
 using ElectronicHandyman.Scrapper.Internal;
 using ElectronicHandyman.Scrapper.Options;
 using ElectronicHandyman.Scrapper.Services;
@@ -15,7 +16,9 @@ public static class ServiceExtensions
         services.AddHttpClient();
         
         services
+            .AddScoped<TexasApiClient>()
             .AddScoped<ArduinoPageFetcher>()
+            .AddScoped<ITexasService, TexasService>()
             .AddScoped<IArduinoScrapperService, ArduinoScrapperService>()
             .AddScoped<IScrappingDataPersister, ScrappingDataPersister>();
         

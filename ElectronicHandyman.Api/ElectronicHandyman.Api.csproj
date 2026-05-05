@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260302" />
+    <PackageReference Include="OpenCvSharp4_.runtime.ubuntu.20.04-x64" Version="4.10.0.20240616" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.13.22" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
@@ -36,5 +37,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="LinkLinuxNativeLibs" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <MakeDir Directories="$(OutputPath)x64" />
+    <Exec Command="ln -sf /usr/lib/libleptonica-1.82.0.so $(OutputPath)x64/libleptonica-1.82.0.so" />
+    <Exec Command="ln -sf /usr/lib/libtesseract50.so $(OutputPath)x64/libtesseract50.so" />
+  </Target>
 
 </Project>
