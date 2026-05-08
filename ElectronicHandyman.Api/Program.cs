@@ -40,5 +40,16 @@ app.UseHttpsRedirection();
 
 app.MapScrapping();
 app.MapImages();
+app.MapPost("/upload-image", async (IFormFile file) => 
+    {
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream);
 
+        var imageBytes = memoryStream.ToArray();
+    
+        ImageProcessing.ProcessImage(imageBytes);
+        return TypedResults.Ok("Plik wczytany pomyślnie");
+    })
+    .WithName("UploadImage")
+    .DisableAntiforgery();
 app.Run();
