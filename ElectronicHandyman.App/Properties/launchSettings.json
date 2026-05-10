@@ -1,5 +1,9 @@
 {
   "profiles": {
+    "Android": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    },
     "Windows Machine": {
       "commandName": "Project",
       "nativeDebugging": false

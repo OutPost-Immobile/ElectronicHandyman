@@ -15,9 +15,7 @@
     <Grid RowDefinitions="6*, Auto, 3*">
         <!-- Camera + Overlay stacked -->
         <Grid Grid.Row="0">
-            <maui:CameraView x:Name="CameraView"
-                             WidthRequest="400"
-                             HeightRequest="400" />
+            <maui:CameraView x:Name="CameraView"/>
             <GraphicsView x:Name="OverlayView"
                           InputTransparent="True" />
 

@@ -1,8 +1,12 @@
 <Solution>
+  <Folder Name="/ElectronicHandyman.Avalonia/">
+    <Project Path="ElectronicHandyman.Avalonia/ElectronicHandyman.Avalonia/ElectronicHandyman.Avalonia.csproj" />
+    <Project Path="ElectronicHandyman.Avalonia/ElectronicHandyman.Avalonia.Android/ElectronicHandyman.Avalonia.Android.csproj" />
+  </Folder>
   <Project Path="ElectronicHandyman.Api/ElectronicHandyman.Api.csproj" />
   <Project Path="ElectronicHandyman.App/ElectronicHandyman.App.csproj" />
   <Project Path="ElectronicHandyman.Domain/ElectronicHandyman.Domain.csproj" />
   <Project Path="ElectronicHandyman.Scrapper/ElectronicHandyman.Scrapper.csproj" />
-  <Project Path="ElectronicHandyman.Services\ElectronicHandyman.Services.csproj" Type="C#" />
-  <Project Path="ElectronicHandyman.Services.Tests\ElectronicHandyman.Services.Tests.csproj" Type="C#" />
+  <Project Path="ElectronicHandyman.Services\ElectronicHandyman.Services.csproj" />
+  <Project Path="ElectronicHandyman.Services.Tests\ElectronicHandyman.Services.Tests.csproj" />
 </Solution>
