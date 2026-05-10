@@ -9,4 +9,4 @@ public class DetectionResult
     public int FrameHeight { get; init; }
 }
 
-public readonly record struct BoundingBox(int X, int Y, int Width, int Height);
+public readonly record struct BoundingBox(int X, int Y, int Width, int Height, float Confidence = 0f);

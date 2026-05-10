@@ -13,15 +13,34 @@
     <vm:MainViewModel />
   </Design.DataContext>
 
-  <Grid RowDefinitions="*,Auto" Background="Black">
+  <Grid RowDefinitions="*,Auto,Auto" Background="Black">
     <Grid>
-      <Image Source="{Binding CameraImage}" Stretch="Uniform" />
-      <controls:BoundingBoxOverlay Boxes="{Binding BoundingBoxes}"
-                                   FrameWidth="{Binding FrameWidth}"
-                                   FrameHeight="{Binding FrameHeight}" />
+      <Grid RenderTransformOrigin="50%,50%">
+        <Grid.RenderTransform>
+          <RotateTransform Angle="{Binding RotationDegrees}" />
+        </Grid.RenderTransform>
+        <Image Source="{Binding CameraImage}" Stretch="Uniform" />
+        <controls:BoundingBoxOverlay Boxes="{Binding BoundingBoxes}"
+                                     FrameWidth="{Binding FrameWidth}"
+                                     FrameHeight="{Binding FrameHeight}" />
+      </Grid>
     </Grid>
-    <Border Grid.Row="1" Background="#AA000000" Padding="8">
-      <TextBlock Text="{Binding StatusText}" Foreground="White" />
+    <StackPanel Grid.Row="1" Spacing="4" Margin="8,4">
+      <Button Command="{Binding IdentifyChipsCommand}"
+              Content="🔍 Identify Chips"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center"
+              FontSize="18"
+              Padding="12" />
+      <Button Command="{Binding PickAndIdentifyCommand}"
+              Content="📷 Pick Photo"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center"
+              FontSize="18"
+              Padding="12" />
+    </StackPanel>
+    <Border Grid.Row="2" Background="#AA000000" Padding="8">
+      <TextBlock Text="{Binding StatusText}" Foreground="White" TextWrapping="Wrap" />
     </Border>
   </Grid>
 </UserControl>

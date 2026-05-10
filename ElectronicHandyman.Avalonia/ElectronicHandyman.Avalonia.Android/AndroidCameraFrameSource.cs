@@ -40,12 +40,16 @@ public sealed class AndroidCameraFrameSource : Java.Lang.Object, ICameraFrameSou
             return;
         }
 
-        if (_activity is not ILifecycleOwner lifecycleOwner)
+        var activity = _activity;
+        if (activity is not ILifecycleOwner lifecycleOwner)
         {
+            _startFailReason = "Activity not set or not ILifecycleOwner";
             return;
         }
 
-        var provider = await GetCameraProviderAsync(_activity);
+        _startFailReason = null;
+
+        var provider = await GetCameraProviderAsync(activity).ConfigureAwait(false);
         var selector = CameraSelector.DefaultBackCamera;
 
         _analysisExecutor ??= Executors.NewSingleThreadExecutor();
@@ -56,12 +60,29 @@ public sealed class AndroidCameraFrameSource : Java.Lang.Object, ICameraFrameSou
 
         _imageAnalysis.SetAnalyzer(_analysisExecutor, new FrameAnalyzer(this));
 
-        provider.UnbindAll();
-        provider.BindToLifecycle(lifecycleOwner, selector, _imageAnalysis);
+        // BindToLifecycle must run on the main thread
+        var bindTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        activity.RunOnUiThread(() =>
+        {
+            try
+            {
+                provider.UnbindAll();
+                provider.BindToLifecycle(lifecycleOwner, selector, _imageAnalysis);
+                bindTcs.TrySetResult();
+            }
+            catch (System.Exception ex)
+            {
+                bindTcs.TrySetException(ex);
+            }
+        });
+        await bindTcs.Task.ConfigureAwait(false);
 
         _cameraProvider = provider;
         _isRunning = true;
     }
+
+    public string? StartFailReason => _startFailReason;
+    private string? _startFailReason;
 
     public Task StopAsync()
     {
@@ -79,7 +100,7 @@ public sealed class AndroidCameraFrameSource : Java.Lang.Object, ICameraFrameSou
 
     private static Task<ProcessCameraProvider> GetCameraProviderAsync(Activity activity)
     {
-        var tcs = new TaskCompletionSource<ProcessCameraProvider>();
+        var tcs = new TaskCompletionSource<ProcessCameraProvider>(TaskCreationOptions.RunContinuationsAsynchronously);
         var future = ProcessCameraProvider.GetInstance(activity);
         future.AddListener(new Runnable(() =>
         {
@@ -104,6 +125,8 @@ public sealed class AndroidCameraFrameSource : Java.Lang.Object, ICameraFrameSou
             _owner = owner;
         }
 
+        public Size DefaultTargetResolution => new Size(1280, 720);
+
         public void Analyze(IImageProxy image)
         {
             try
@@ -113,10 +136,11 @@ public sealed class AndroidCameraFrameSource : Java.Lang.Object, ICameraFrameSou
                     return;
                 }
 
+                var rotationDegrees = image.ImageInfo.RotationDegrees;
                 var jpegBytes = ConvertToJpeg(image, out var width, out var height);
                 if (jpegBytes.Length > 0)
                 {
-                    _owner.FrameReady?.Invoke(_owner, new CameraFrameEventArgs(jpegBytes, width, height));
+                    _owner.FrameReady?.Invoke(_owner, new CameraFrameEventArgs(jpegBytes, width, height, rotationDegrees));
                 }
             }
             catch
@@ -135,18 +159,46 @@ public sealed class AndroidCameraFrameSource : Java.Lang.Object, ICameraFrameSou
             height = image.Height;
 
             var planes = image.GetPlanes();
-            var yBuffer = planes[0].Buffer;
-            var uBuffer = planes[1].Buffer;
-            var vBuffer = planes[2].Buffer;
+            var yPlane = planes[0];
+            var uPlane = planes[1];
+            var vPlane = planes[2];
 
-            int ySize = yBuffer.Remaining();
-            int uSize = uBuffer.Remaining();
-            int vSize = vBuffer.Remaining();
+            int yRowStride = yPlane.RowStride;
+            int uvRowStride = uPlane.RowStride;
+            int uvPixelStride = uPlane.PixelStride;
 
-            var nv21 = new byte[ySize + uSize + vSize];
-            yBuffer.Get(nv21, 0, ySize);
-            vBuffer.Get(nv21, ySize, vSize);
-            uBuffer.Get(nv21, ySize + vSize, uSize);
+            var yBuffer = yPlane.Buffer!;
+            var uBuffer = uPlane.Buffer!;
+            var vBuffer = vPlane.Buffer!;
+
+            var yData = new byte[yBuffer.Remaining()];
+            var uData = new byte[uBuffer.Remaining()];
+            var vData = new byte[vBuffer.Remaining()];
+            yBuffer.Get(yData);
+            uBuffer.Get(uData);
+            vBuffer.Get(vData);
+
+            var nv21 = new byte[width * height * 3 / 2];
+            int pos = 0;
+
+            for (int row = 0; row < height; row++)
+            {
+                System.Array.Copy(yData, row * yRowStride, nv21, pos, width);
+                pos += width;
+            }
+
+            int uvHeight = height / 2;
+            int uvWidth = width / 2;
+
+            for (int row = 0; row < uvHeight; row++)
+            {
+                for (int col = 0; col < uvWidth; col++)
+                {
+                    int uvIndex = row * uvRowStride + col * uvPixelStride;
+                    nv21[pos++] = vData[uvIndex];
+                    nv21[pos++] = uData[uvIndex];
+                }
+            }
 
             using var yuvImage = new YuvImage(nv21, ImageFormatType.Nv21, width, height, null);
             using var stream = new MemoryStream();

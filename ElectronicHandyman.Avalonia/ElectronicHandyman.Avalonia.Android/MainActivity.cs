@@ -38,7 +38,7 @@ public class MainActivity : AvaloniaMainActivity
 
         if (requestCode == CameraRequestCode && grantResults.Length > 0 && grantResults[0] == Permission.Granted)
         {
-            _ = PlatformServices.CameraFrameSource?.StartAsync();
+            StartCameraAsync();
         }
     }
 
@@ -46,10 +46,34 @@ public class MainActivity : AvaloniaMainActivity
     {
         if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.Camera) == Permission.Granted)
         {
-            _ = PlatformServices.CameraFrameSource?.StartAsync();
+            StartCameraAsync();
             return;
         }
 
         ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.Camera }, CameraRequestCode);
+    }
+
+    private async void StartCameraAsync()
+    {
+        try
+        {
+            var source = PlatformServices.CameraFrameSource;
+            if (source != null)
+            {
+                await source.StartAsync();
+                if (!source.IsRunning)
+                {
+                    global::Android.Widget.Toast.MakeText(this, "Camera source not running after StartAsync", global::Android.Widget.ToastLength.Long)?.Show();
+                }
+            }
+            else
+            {
+                global::Android.Widget.Toast.MakeText(this, "CameraFrameSource is null", global::Android.Widget.ToastLength.Long)?.Show();
+            }
+        }
+        catch (System.Exception ex)
+        {
+            global::Android.Widget.Toast.MakeText(this, $"Camera error: {ex.Message}", global::Android.Widget.ToastLength.Long)?.Show();
+        }
     }
 }
