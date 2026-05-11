@@ -23,4 +23,10 @@
     <PackageReference Include="OpenCvSharp4" />
     <PackageReference Include="Svg.Skia" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\ProcessingView.axaml.cs">
+      <DependentUpon>ProcessingView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -13,6 +14,8 @@ public partial class App : Application
 {
     private ContentControl? _navigationHost;
     private MainViewModel? _mainViewModel;
+    private VideoFrameProcessor? _processor;
+    private ChipIdentificationService? _identificationService;
 
     public override void Initialize()
     {
@@ -29,11 +32,15 @@ public partial class App : Application
             yoloDetector = new YoloDetector(modelBytes);
         }
 
-        var processor = yoloDetector != null ? new VideoFrameProcessor(yoloDetector) : new VideoFrameProcessor();
-        var identificationService = new ChipIdentificationService("https://100.101.239.33:7198");
-        _mainViewModel = new MainViewModel(cameraSource, processor, identificationService);
+        _processor = yoloDetector != null ? new VideoFrameProcessor(yoloDetector) : new VideoFrameProcessor();
+        _identificationService = new ChipIdentificationService("https://100.101.239.33:7198");
+        
+        _mainViewModel = new MainViewModel(cameraSource, _processor);
         _mainViewModel.SetNavigateToResult(NavigateToResult);
-        _mainViewModel.SetNavigateToBatchResult(NavigateToBatchResult);        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        _mainViewModel.SetNavigateToBatchResult(NavigateToBatchResult);
+        _mainViewModel.SetNavigateToProcessing(NavigateToProcessing);
+
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _navigationHost = new ContentControl { Content = new MainView { DataContext = _mainViewModel } };
             desktop.MainWindow = new MainWindow { Content = _navigationHost };
@@ -45,6 +52,20 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void NavigateToProcessing(byte[] imageBytes)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_navigationHost == null || _processor == null || _identificationService == null) return;
+            
+            var processingVm = new ProcessingViewModel(imageBytes, _processor, _identificationService, NavigateToBatchResult, NavigateToResult, NavigateBack);
+            _navigationHost.Content = new ProcessingView { DataContext = processingVm };
+            
+            // Fire and forget processing
+            _ = Task.Run(() => processingVm.ProcessImageAsync());
+        });
     }
 
     private void NavigateToResult(string chipName, string svgContent)
