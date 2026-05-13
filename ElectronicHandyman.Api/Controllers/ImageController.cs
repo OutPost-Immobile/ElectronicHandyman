@@ -41,7 +41,7 @@ public static class ImageController
         
         var originalImageBytes = memoryStream.ToArray();
         
-        var text = ImageProcessing.ProcessImage(originalImageBytes);
+        var text = ImageProcessing.ProcessImage(originalImageBytes, Directory.GetCurrentDirectory() + "/processed" + $"/{file.FileName}");
         
         if (string.IsNullOrWhiteSpace(text))
         {

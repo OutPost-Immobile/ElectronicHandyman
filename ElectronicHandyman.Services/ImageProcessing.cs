@@ -64,8 +64,8 @@ public class ImageProcessing
         }
 
         // 8. Try all 4 rotations and pick best OCR result
-        var tesseractPath = Path.Combine(AppContext.BaseDirectory, "tessdata");
-        using var engine = new TesseractEngine(tesseractPath, "eng", EngineMode.Default);
+        var tesseractPath = Path.Combine(Directory.GetCurrentDirectory(), "tessdata");
+        using var engine = new TesseractEngine(tesseractPath, "RIPO", EngineMode.Default);
         engine.SetVariable("tessedit_char_whitelist", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
         engine.SetVariable("user_defined_dpi", "300");
 
