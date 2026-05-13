@@ -1,10 +1,13 @@
-﻿using Tesseract;
+using Tesseract;
 using OpenCvSharp;
 
 namespace Services;
 
 public class ImageProcessing
 {
+    private static readonly string ProcessedDir = "/home/kollibroman/Studia/ElectronicHandyman/output/processed";
+    private static int _counter;
+
     public static string ProcessImage(byte[] imageBytes, string? saveProcessedPath = null)
     {
         Console.WriteLine("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
@@ -39,13 +42,13 @@ public class ImageProcessing
         using var thresh = new Mat();
         if (isDarkBackground)
         {
-            // Light text on dark bg — threshold normally (text becomes white)
-            Cv2.Threshold(sharpened, thresh, 0, 255, ThresholdTypes.Binary | ThresholdTypes.Otsu);
+            // Light text on dark bg — BinaryInv makes text black on white (what Tesseract needs)
+            Cv2.Threshold(sharpened, thresh, 0, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
         }
         else
         {
-            // Dark text on light bg — invert
-            Cv2.Threshold(sharpened, thresh, 0, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
+            // Dark text on light bg — Binary keeps text dark, invert to get black text on white
+            Cv2.Threshold(sharpened, thresh, 0, 255, ThresholdTypes.Binary | ThresholdTypes.Otsu);
         }
 
         // 6. Light morphological close to fill small gaps in letter strokes
@@ -57,15 +60,22 @@ public class ImageProcessing
         using var padded = new Mat();
         Cv2.CopyMakeBorder(closed, padded, 40, 40, 40, 40, BorderTypes.Constant, new Scalar(255));
 
-        // Save processed image if path provided
-        if (!string.IsNullOrEmpty(saveProcessedPath))
+        // Always save processed image for debugging
+        try
         {
-            Cv2.ImWrite(saveProcessedPath, padded);
+            Directory.CreateDirectory(ProcessedDir);
+            var filename = saveProcessedPath ?? Path.Combine(ProcessedDir, $"processed_{Interlocked.Increment(ref _counter):D4}.png");
+            Cv2.ImWrite(filename, padded);
+            Console.WriteLine($"Saved processed image: {filename}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to save processed image: {ex.Message}");
         }
 
         // 8. Try all 4 rotations and pick best OCR result
         var tesseractPath = Path.Combine(Directory.GetCurrentDirectory(), "tessdata");
-        using var engine = new TesseractEngine(tesseractPath, "RIPO", EngineMode.Default);
+        using var engine = new TesseractEngine(tesseractPath, "eng", EngineMode.Default);
         engine.SetVariable("tessedit_char_whitelist", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
         engine.SetVariable("user_defined_dpi", "300");
 

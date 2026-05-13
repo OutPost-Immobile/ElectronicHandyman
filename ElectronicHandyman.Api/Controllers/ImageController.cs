@@ -40,8 +40,16 @@ public static class ImageController
         await file.CopyToAsync(memoryStream);
         
         var originalImageBytes = memoryStream.ToArray();
-        
-        var text = ImageProcessing.ProcessImage(originalImageBytes, Directory.GetCurrentDirectory() + "/processed" + $"/{file.FileName}");
+
+        // Save original and processed
+        var outputDir = "/home/kollibroman/Studia/ElectronicHandyman/output";
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+        Directory.CreateDirectory(Path.Combine(outputDir, "crops"));
+        File.WriteAllBytes(Path.Combine(outputDir, "crops", $"upload_{timestamp}.jpg"), originalImageBytes);
+
+        var processedPath = Path.Combine(outputDir, "processed", $"upload_{timestamp}_processed.png");
+        Directory.CreateDirectory(Path.Combine(outputDir, "processed"));
+        var text = ImageProcessing.ProcessImage(originalImageBytes, processedPath);
         
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -83,6 +91,12 @@ public static class ImageController
 
         var imageBytes = memoryStream.ToArray();
 
+        // Save original crop
+        var outputDir = "/home/kollibroman/Studia/ElectronicHandyman/output";
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+        Directory.CreateDirectory(Path.Combine(outputDir, "crops"));
+        await File.WriteAllBytesAsync(Path.Combine(outputDir, "crops", $"{timestamp}.jpg"), imageBytes);
+
         var text = ImageProcessing.ProcessImage(imageBytes);
 
         if (string.IsNullOrWhiteSpace(text))
@@ -113,8 +127,10 @@ public static class ImageController
         var results = new List<object>();
 
         // Save crops to local folder for debugging/training
-        var cropsDir = Path.Combine(AppContext.BaseDirectory, "crops", DateTime.Now.ToString("yyyyMMdd_HHmmss"));
-        var processedDir = Path.Combine(AppContext.BaseDirectory, "processed", DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+        var baseOutputDir = "/home/kollibroman/Studia/ElectronicHandyman/output";
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var cropsDir = Path.Combine(baseOutputDir, "crops", timestamp);
+        var processedDir = Path.Combine(baseOutputDir, "processed", timestamp);
         Directory.CreateDirectory(cropsDir);
         Directory.CreateDirectory(processedDir);
 
