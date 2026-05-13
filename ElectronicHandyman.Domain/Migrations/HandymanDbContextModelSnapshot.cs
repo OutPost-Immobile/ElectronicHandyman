@@ -115,6 +115,204 @@ namespace ElectronicHandyman.Domain.Migrations
                     b.ToTable("TexasApiConfig");
                 });
 
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.CircleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("CenterX")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("CenterY")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("FillType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Radius")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("StrokeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("StrokeWidth")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("SymbolId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SymbolId");
+
+                    b.ToTable("Circles");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PinEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("AtAngle")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("AtX")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("AtY")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("ElectricalPinType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("GraphicPinShape")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SymbolId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SymbolId");
+
+                    b.ToTable("Pins");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PolylineEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FillType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StrokeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("StrokeWidth")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("SymbolId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SymbolId");
+
+                    b.ToTable("Polylines");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PolylinePointEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PolylineId")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("X")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Y")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PolylineId");
+
+                    b.ToTable("PolylinePoints");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.RectangleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("EndX")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("EndY")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("FillType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("StartX")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("StartY")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("StrokeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("StrokeWidth")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("SymbolId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SymbolId");
+
+                    b.ToTable("Rectangles");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.SymbolEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Symbols");
+                });
+
             modelBuilder.Entity("ElectronicHandyman.Domain.Domain.BoardDocumentEntity", b =>
                 {
                     b.HasOne("ElectronicHandyman.Domain.Domain.BoardEntity", "Board")
@@ -137,6 +335,61 @@ namespace ElectronicHandyman.Domain.Migrations
                     b.Navigation("BoardFamily");
                 });
 
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.CircleEntity", b =>
+                {
+                    b.HasOne("ElectronicHandyman.Domain.Domain.Kicad.SymbolEntity", "Symbol")
+                        .WithMany("Circles")
+                        .HasForeignKey("SymbolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Symbol");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PinEntity", b =>
+                {
+                    b.HasOne("ElectronicHandyman.Domain.Domain.Kicad.SymbolEntity", "Symbol")
+                        .WithMany("Pins")
+                        .HasForeignKey("SymbolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Symbol");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PolylineEntity", b =>
+                {
+                    b.HasOne("ElectronicHandyman.Domain.Domain.Kicad.SymbolEntity", "Symbol")
+                        .WithMany("Polylines")
+                        .HasForeignKey("SymbolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Symbol");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PolylinePointEntity", b =>
+                {
+                    b.HasOne("ElectronicHandyman.Domain.Domain.Kicad.PolylineEntity", "Polyline")
+                        .WithMany("Points")
+                        .HasForeignKey("PolylineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Polyline");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.RectangleEntity", b =>
+                {
+                    b.HasOne("ElectronicHandyman.Domain.Domain.Kicad.SymbolEntity", "Symbol")
+                        .WithMany("Rectangles")
+                        .HasForeignKey("SymbolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Symbol");
+                });
+
             modelBuilder.Entity("ElectronicHandyman.Domain.Domain.BoardEntity", b =>
                 {
                     b.Navigation("Documents");
@@ -145,6 +398,22 @@ namespace ElectronicHandyman.Domain.Migrations
             modelBuilder.Entity("ElectronicHandyman.Domain.Domain.BoardFamilyEntity", b =>
                 {
                     b.Navigation("Boards");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.PolylineEntity", b =>
+                {
+                    b.Navigation("Points");
+                });
+
+            modelBuilder.Entity("ElectronicHandyman.Domain.Domain.Kicad.SymbolEntity", b =>
+                {
+                    b.Navigation("Circles");
+
+                    b.Navigation("Pins");
+
+                    b.Navigation("Polylines");
+
+                    b.Navigation("Rectangles");
                 });
 #pragma warning restore 612, 618
         }

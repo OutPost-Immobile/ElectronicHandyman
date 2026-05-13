@@ -19,6 +19,7 @@ builder.Services.AddSerilog((context, configuration) =>
 
 builder.Services.AddScrapper(builder.Configuration);
 builder.Services.AddDomain(builder.Configuration);
+builder.Services.AddServices();
 
 builder.Services.AddScoped<ArduinoService>();
 
@@ -30,8 +31,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     
     app.MapScalarApiReference();
-    app.MapScalarApiReference();
-    
+
     app.MapGet("/", () => Results.Redirect("/scalar/v1"))
         .ExcludeFromDescription();
 }
@@ -39,15 +39,14 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapScrapping();
-
-app.MapPost("/api/image/upload", async (IFormFile file) =>
+app.MapImages();
+app.MapPost("/upload-image", async (IFormFile file) => 
     {
-
         using var memoryStream = new MemoryStream();
         await file.CopyToAsync(memoryStream);
 
         var imageBytes = memoryStream.ToArray();
-        
+    
         ImageProcessing.ProcessImage(imageBytes);
         return TypedResults.Ok("Plik wczytany pomyślnie");
     })

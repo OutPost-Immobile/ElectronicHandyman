@@ -26,17 +26,17 @@ internal class TexasApiClient
     public async Task<string> AuthenticateAndPersistTokenAsync()
     {
         using var client = _httpClientFactory.CreateClient();
-        
-        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
 
-        var request = new
+        var dict = new Dictionary<string, string>
         {
-            grant_type = "client_credentials",
-            client_id = _texasOptions.Key,
-            client_secret = _texasOptions.Secret,
+            { "grant_type", "client_credentials" },
+            { "client_id", _texasOptions.Key },
+            { "client_secret", _texasOptions.Secret }
         };
         
-        var response = await client.PostAsJsonAsync(_texasOptions.Url + "oauth/accesstoken", request);
+        var requestContent = new FormUrlEncodedContent(dict);
+        
+        var response = await client.PostAsJsonAsync(_texasOptions.Url + "oauth", requestContent);
         
         var token = await response.Content.ReadAsStringAsync();
 
@@ -51,7 +51,7 @@ internal class TexasApiClient
         return token;
     }
 
-    public async Task<TexasApiResponseModel> SearchForBoardAsync(string boardName)
+    public async Task<TexasApiResponseModel> SearchForBoardFamilyAsync(string query)
     {
         var token = await _dbContext.TexasApiConfig
             .Select(x => x.AccessToken)
@@ -63,7 +63,7 @@ internal class TexasApiClient
 
         var parameters = new Dictionary<string, string>
         {
-            ["GenericProductIdentifier"] = boardName,
+            ["GenericProductIdentifier"] = query,
             ["PageNumber"] = "0",
             ["Size"] = "100"
         };
@@ -89,5 +89,27 @@ internal class TexasApiClient
         }
 
         return response;
+    }
+    
+    public async Task<Product?> GetProductByIdentifierAsync(string boardName)
+    {
+        var token = await _dbContext.TexasApiConfig
+            .Select(x => x.AccessToken)
+            .FirstOrDefaultAsync() ?? await AuthenticateAndPersistTokenAsync();
+
+        using var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        
+        var encodedIdentifier = Uri.EscapeDataString(boardName);
+        var url = $"{_texasOptions.Url}products/{encodedIdentifier}";
+
+        try
+        {
+            return await client.GetFromJsonAsync<Product>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null; 
+        }
     }
 }

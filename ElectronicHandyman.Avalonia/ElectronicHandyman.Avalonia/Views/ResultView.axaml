@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ElectronicHandyman.Avalonia.ViewModels"
+             x:Class="ElectronicHandyman.Avalonia.Views.ResultView"
+             x:DataType="vm:ResultViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto" Background="#1a1a2e">
+    <!-- Header -->
+    <Border Grid.Row="0" Background="#16213e" Padding="12">
+      <TextBlock Text="{Binding StatusText}"
+                 Foreground="White"
+                 FontSize="16"
+                 HorizontalAlignment="Center" />
+    </Border>
+
+    <!-- Main content -->
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="12" Margin="8">
+
+        <!-- Annotated photo -->
+        <TextBlock Text="📸 Detected Chips" Foreground="LimeGreen" FontSize="14" FontWeight="Bold" />
+        <Image Source="{Binding ResultImage}" Stretch="Uniform" />
+
+        <!-- Chip list - clickable -->
+        <TextBlock Text="Tap a chip to see pinout:" Foreground="White" FontSize="13" Margin="0,4,0,2" />
+        <ItemsControl ItemsSource="{Binding Chips}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ChipResultItem">
+              <Button Command="{Binding $parent[ItemsControl].((vm:ResultViewModel)DataContext).SelectChipCommand}"
+                      CommandParameter="{Binding}"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Left"
+                      Padding="14,10"
+                      Margin="0,2"
+                      Background="#2a2a4e"
+                      Foreground="White"
+                      FontSize="15">
+                <TextBlock Text="{Binding ChipName}" FontSize="15" TextWrapping="Wrap" />
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Pinout of selected chip -->
+        <Border Background="#0f3460" CornerRadius="8" Padding="12" Margin="0,8"
+                IsVisible="{Binding PinoutImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding SelectedChip.ChipName, StringFormat='📋 Pinout: {0}'}"
+                       Foreground="Cyan" FontSize="16" FontWeight="Bold" />
+            <Image Source="{Binding PinoutImage}" Stretch="Uniform" />
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- Back button -->
+    <Button Grid.Row="2"
+            Command="{Binding GoBackCommand}"
+            Content="← Back to Camera"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            FontSize="16"
+            Padding="12"
+            Margin="8" />
+  </Grid>
+</UserControl>

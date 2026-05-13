@@ -1,7 +1,9 @@
+using ElectronicHandyman.Domain.Enums;
 using ElectronicHandyman.Scrapper.Abstractions;
 using ElectronicHandyman.Scrapper.Clients;
 using ElectronicHandyman.Scrapper.Internal;
 using ElectronicHandyman.Scrapper.Models;
+using ElectronicHandyman.Scrapper.Models.Api;
 using ElectronicHandyman.Scrapper.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -21,13 +23,67 @@ internal class TexasService : ITexasService
         _texasOptions = texasOptions.Value;
     }
 
-    public async Task<IEnumerable<BoardFamilyModel>> AuthenticateAndGetBoardsFamily(string boardFamilyName)
+    public async Task<IEnumerable<BoardFamilyModel>> AuthenticateAndGetBoardsFamily(string query)
     {
         await _texasApiClient.AuthenticateAndPersistTokenAsync();
+   
+        var familyResponse = await _texasApiClient.SearchForBoardFamilyAsync(query);
         
-        var response = await _texasApiClient.SearchForBoardAsync(boardFamilyName);
+        var productsToMap = new List<Product>();
 
-        return [];
+        if (familyResponse?.Content != null && familyResponse.Content.Count > 0)
+        {
+            productsToMap.AddRange(familyResponse.Content);
+        }
+        else
+        {
+            var specificProduct = await _texasApiClient.GetProductByIdentifierAsync(query);
+            
+            if (specificProduct != null)
+            {
+                productsToMap.Add(specificProduct);
+            }
+        }
+        
+        if (productsToMap.Count == 0)
+        {
+            return [];
+        }
+        
+        var families = productsToMap
+            .GroupBy(p => p.GenericProductIdentifier ?? "Unknown Family")
+            .Select(group => new BoardFamilyModel
+            {
+                FamilyName = group.Key,
+                Boards = group.Select(product => new BoardModel
+                {
+                    Name = product.Identifier,
+                    Href = product.Url,
+                    Documents = new List<DocumentModel>
+                    {
+                        new DocumentModel 
+                        { 
+                            DocumentType = DocumentType.Datasheet, 
+                            FileName = $"{product.Identifier}_Datasheet", 
+                            StaticUrl = product.DatasheetUrl 
+                        },
+                        new DocumentModel 
+                        { 
+                            DocumentType = DocumentType.QualityEstimator, 
+                            FileName = $"{product.Identifier}_QualityEstimator", 
+                            StaticUrl = product.QualityEstimatorUrl 
+                        },
+                        new DocumentModel 
+                        { 
+                            DocumentType = DocumentType.MaterialContent, 
+                            FileName = $"{product.Identifier}_MaterialContent", 
+                            StaticUrl = product.MaterialContentUrl 
+                        }
+                    }.Where(doc => !string.IsNullOrWhiteSpace(doc.StaticUrl)).ToList()
+                }).ToList()
+            });
+
+        return families;
     }
 
     public async Task<Stream> GetBoardDocumentAsync(string boardFamilyName)
