@@ -47,7 +47,7 @@ app.MapPost("/upload-image", async (IFormFile file) =>
 
         var imageBytes = memoryStream.ToArray();
     
-        ImageProcessing.ProcessImage(imageBytes);
+        ImageProcessing.ProcessImage(imageBytes, Directory.GetCurrentDirectory() + "/processed");
         return TypedResults.Ok("Plik wczytany pomyślnie");
     })
     .WithName("UploadImage")

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="HandyDb@localhost" uuid="e481b747-6012-4f72-b0c7-e1073d40970c">
+    <data-source source="LOCAL" name="HandyDb@localhost" connection-mode="Multiple" uuid="e481b747-6012-4f72-b0c7-e1073d40970c">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <configured-by-url>true</configured-by-url>

@@ -14,7 +14,7 @@ public static partial class OcrTextNormalizer
     /// Removes whitespace, converts to uppercase, strips invalid characters.
     /// Valid characters: A-Z, 0-9, hyphen.
     /// </summary>
-    /// <param name="rawOcrText">Raw text from Tesseract OCR output.</param>
+    /// <param name="rawOcrText">Raw text from OCR output.</param>
     /// <returns>Normalized string containing only A-Z, 0-9, and hyphen. Returns empty string for null/empty input.</returns>
     public static string Normalize(string? rawOcrText)
     {

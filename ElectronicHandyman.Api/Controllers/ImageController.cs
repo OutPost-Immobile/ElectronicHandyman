@@ -45,7 +45,7 @@ public static class ImageController
         var outputDir = "/home/kollibroman/Studia/ElectronicHandyman/output";
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
         Directory.CreateDirectory(Path.Combine(outputDir, "crops"));
-        File.WriteAllBytes(Path.Combine(outputDir, "crops", $"upload_{timestamp}.jpg"), originalImageBytes);
+        await File.WriteAllBytesAsync(Path.Combine(outputDir, "crops", $"upload_{timestamp}.jpg"), originalImageBytes);
 
         var processedPath = Path.Combine(outputDir, "processed", $"upload_{timestamp}_processed.png");
         Directory.CreateDirectory(Path.Combine(outputDir, "processed"));
