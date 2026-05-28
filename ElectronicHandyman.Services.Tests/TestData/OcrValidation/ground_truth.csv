@@ -1,0 +1,6 @@
+FileName,ExpectedChipName,Category
+chip001.jpg,STM32F103C8T6,normal
+chip002.png,LM358N,low_light
+chip003.jpg,NE555P,rotated
+chip004.jpg,ATMEGA328P,normal
+chip005.png,74HC595,blurry

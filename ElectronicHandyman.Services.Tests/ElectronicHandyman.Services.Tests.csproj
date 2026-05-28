@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Exe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
@@ -10,15 +11,21 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
-        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.v3" Version="3.2.2" />
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.0" />
-        <PackageReference Include="FsCheck" Version="2.16.6" />
-        <PackageReference Include="FsCheck.Xunit" Version="2.16.6" />
+        <PackageReference Include="FsCheck" Version="3.3.3" />
+        <PackageReference Include="FsCheck.Xunit.v3" Version="3.3.3" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-preview.5.25277.114" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ElectronicHandyman.Services\ElectronicHandyman.Services.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="TestData\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>
