@@ -237,6 +237,49 @@ public class ReportGenerator
     }
 
     /// <summary>
+    /// Generates ablation comparison table in CSV.
+    /// Returns the file path of the generated report.
+    /// </summary>
+    public string GenerateAblationCsvReport(
+        IReadOnlyList<(PipelineConfiguration Config, ValidationMetrics Metrics)> results,
+        PipelineConfiguration recommendedConfig)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+        ArgumentNullException.ThrowIfNull(recommendedConfig);
+
+        Directory.CreateDirectory(_outputDir);
+
+        var timestamp = DateTime.Now;
+        var fileName = $"ablation_{timestamp:yyyy-MM-dd_HHmmss}.csv";
+        var filePath = Path.Combine(_outputDir, fileName);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("ConfigName,UseClahe,ScaleFactor,BlurKernelSize,ClaheClipLimit,Precision,Recall,F1,MeanCharAccuracy,AvgProcessingTimeMs,Recommended");
+
+        foreach (var (config, metrics) in results)
+        {
+            var isRecommended = string.Equals(config.Name, recommendedConfig.Name, StringComparison.OrdinalIgnoreCase);
+            sb.AppendLine(string.Format(
+                CultureInfo.InvariantCulture,
+                "{0},{1},{2:F2},{3},{4:F2},{5:F4},{6:F4},{7:F4},{8:F4},{9:F2},{10}",
+                EscapeCsvField(config.Name),
+                config.UseClahe,
+                config.ScaleFactor,
+                config.BlurKernelSize,
+                config.ClaheClipLimit,
+                metrics.Classification.Precision,
+                metrics.Classification.Recall,
+                metrics.Classification.F1Score,
+                metrics.CharAccuracy.MeanAccuracy,
+                metrics.Performance.AverageTimeMs,
+                isRecommended));
+        }
+
+        File.WriteAllText(filePath, sb.ToString());
+        return filePath;
+    }
+
+    /// <summary>
     /// Escapes a CSV field value by quoting it if it contains commas, quotes, or newlines.
     /// </summary>
     private static string EscapeCsvField(string field)

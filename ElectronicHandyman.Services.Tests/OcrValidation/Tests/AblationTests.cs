@@ -56,7 +56,11 @@ public class AblationTests
         // Generate ablation comparison report
         var reportGenerator = new ReportGenerator(ReportOutputPath);
         var reportPath = reportGenerator.GenerateAblationReport(ablationResult.Results);
+        var csvPath = reportGenerator.GenerateAblationCsvReport(
+            ablationResult.Results,
+            ablationResult.RecommendedConfig);
         _output.WriteLine($"Ablation report: {reportPath}");
+        _output.WriteLine($"Ablation CSV: {csvPath}");
 
         // Verify we got results for all default configurations
         Assert.Equal(AblationRunner.DefaultConfigurations.Count, ablationResult.Results.Count);

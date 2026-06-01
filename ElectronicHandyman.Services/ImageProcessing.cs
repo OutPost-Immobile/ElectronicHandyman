@@ -22,7 +22,11 @@ public class ImageProcessing
             if (_ocrEngine is not null)
                 return _ocrEngine;
 
-            string modelDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models");
+            var modelDir = Environment.GetEnvironmentVariable("OCR_MODEL_DIR");
+            if (string.IsNullOrWhiteSpace(modelDir))
+            {
+                modelDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models");
+            }
 
             _ocrEngine = new RapidOcr();
             _ocrEngine.InitModels(
