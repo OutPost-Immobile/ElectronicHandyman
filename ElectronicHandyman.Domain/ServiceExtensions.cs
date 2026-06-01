@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,7 +10,15 @@ public static class ServiceExtensions
     {
         var connectionString = configuration.GetConnectionString("Database");
         
-        services.AddNpgsql<HandymanDbContext>(connectionString);
+        services.AddPooledDbContextFactory<HandymanDbContext>(options => 
+                options.UseNpgsql(connectionString), 
+            poolSize: 32);
+        
+        services.AddScoped<HandymanDbContext>(sp => 
+        {
+            var factory = sp.GetRequiredService<IDbContextFactory<HandymanDbContext>>();
+            return factory.CreateDbContext();
+        });
         
         return services;
     }

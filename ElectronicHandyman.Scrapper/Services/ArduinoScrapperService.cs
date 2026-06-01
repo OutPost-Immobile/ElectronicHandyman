@@ -102,9 +102,9 @@ internal class ArduinoScrapperService : IArduinoScrapperService
     private async Task<DataModel> FetchDataAsync(HttpClient client, string url, string boardName)
     {
         var data = await client.GetFromJsonAsync<ArduinoPageDataResponseModel>(url);
-        
-        data?.Result.Data.BoardName = boardName;
-        
+
+        if (data != null) data.Result.Data.BoardName = boardName;
+
         return data?.Result.Data ?? throw new InvalidOperationException($"Deserialized data from {url} was null.");
     }
 }
